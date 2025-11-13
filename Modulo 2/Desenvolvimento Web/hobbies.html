@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meus Hobbies</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c3aed;--muted:#9aa4b2;--glass: rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; padding:32px; background:linear-gradient(180deg,#071022 0%, #07162b 100%); color:#e6eef6}
+    .container{max-width:900px;margin:auto}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    header .logo{width:64px;height:64px;border-radius:12px;background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:28px}
+    h1{margin:0;font-size:26px}
+    p.lead{margin:4px 0 0;color:var(--muted)}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+
+    ul.hobbies{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    li.hobby{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--card)}
+    .icon{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--glass)}
+    .meta{flex:1}
+    .meta strong{display:block;font-size:16px}
+    .meta span{display:block;color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:8px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:6px 10px;border-radius:8px;color:inherit;cursor:pointer}
+    button.primary{background:linear-gradient(90deg,var(--accent),#4f46e5);border:none;color:white}
+    .favorite{background:transparent;border:none;cursor:pointer;font-size:18px}
+
+    .add-row{display:flex;gap:8px;margin-top:14px}
+    input[type=text]{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    small.note{display:block;color:var(--muted);margin-top:8px}
+
+    footer{margin-top:14px;color:var(--muted);font-size:13px}
+
+    @media (max-width:420px){header{flex-direction:column;align-items:flex-start} .icon{width:44px;height:44px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">★</div>
+      <div>
+        <h1>Meus Hobbies</h1>
+        <p class="lead">Uma lista simples e editável dos meus passatempos favoritos.</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <ul id="hobbyList" class="hobbies" aria-live="polite">
+        <!-- itens gerados por JavaScript -->
+      </ul>
+
+      <div class="add-row">
+        <input id="newHobby" type="text" placeholder="Adicionar um hobby (ex: pintar, programar...)" />
+        <button id="addBtn" class="primary">Adicionar</button>
+      </div>
+      <small class="note">Dica: marque com a estrela para indicar seu hobby favorito. As mudanças são salvas no seu navegador.</small>
+
+      <footer>
+        <p>Hobbies incluídos: <span id="count">0</span></p>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    // Hobbies iniciais informados pelo usuário
+    const initialHobbies = [
+      {name: 'Desenhar', icon: '✏️'},
+      {name: 'Praticar esportes', icon: '🏃‍♀️'},
+      {name: 'Ler', icon: '📚'},
+      {name: 'Ouvir música', icon: '🎧'},
+      {name: 'Conversar com meus amigos', icon: '🗣️'},
+      {name: 'Jogar video-game', icon: '🎮'}
+    ];
+
+    const STORAGE_KEY = 'meus_hobbies_v1';
+
+    function loadHobbies(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return initialHobbies.map(h=>({...h, favorite:false}));
+      try{
+        return JSON.parse(raw);
+      }catch(e){
+        return initialHobbies.map(h=>({...h, favorite:false}));
+      }
+    }
+
+    let hobbies = loadHobbies();
+
+    const listEl = document.getElementById('hobbyList');
+    const countEl = document.getElementById('count');
+
+    function save(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(hobbies));
+      render();
+    }
+
+    function toggleFavorite(index){
+      hobbies[index].favorite = !hobbies[index].favorite;
+      save();
+    }
+
+    function removeHobby(index){
+      if(!confirm('Remover "' + hobbies[index].name + '"?')) return;
+      hobbies.splice(index,1);
+      save();
+    }
+
+    function addHobby(name){
+      if(!name || !name.trim()) return;
+      hobbies.push({name: name.trim(), icon: '⭐', favorite:false});
+      save();
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      hobbies.forEach((h, i)=>{
+        const li = document.createElement('li');
+        li.className = 'hobby';
+
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.textContent = h.icon || '✨';
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const title = document.createElement('strong');
+        title.textContent = h.name;
+        const subtitle = document.createElement('span');
+        subtitle.textContent = h.favorite ? 'Favorito' : 'Hobby';
+        meta.appendChild(title);
+        meta.appendChild(subtitle);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const favBtn = document.createElement('button');
+        favBtn.className = 'favorite';
+        favBtn.title = 'Marcar/desmarcar favorito';
+        favBtn.innerHTML = h.favorite ? '★' : '☆';
+        favBtn.addEventListener('click', ()=> toggleFavorite(i));
+
+        const delBtn = document.createElement('button');
+        delBtn.title = 'Remover hobby';
+        delBtn.textContent = 'Remover';
+        delBtn.addEventListener('click', ()=> removeHobby(i));
+
+        actions.appendChild(favBtn);
+        actions.appendChild(delBtn);
+
+        li.appendChild(icon);
+        li.appendChild(meta);
+        li.appendChild(actions);
+
+        listEl.appendChild(li);
+      });
+
+      countEl.textContent = hobbies.length;
+    }
+
+    // setup add controls
+    document.getElementById('addBtn').addEventListener('click', ()=>{
+      const input = document.getElementById('newHobby');
+      addHobby(input.value);
+      input.value = '';
+      input.focus();
+    });
+
+    document.getElementById('newHobby').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') document.getElementById('addBtn').click();
+    });
+
+    // inicializa
+    render();
+  </script>
+</body>
+</html>
